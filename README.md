@@ -7,17 +7,17 @@ Kaggle竞赛数据下载：<https://www.kaggle.com/competitions/h2oai-predict-th
 
 ### 方案一：Conda 环境（推荐 ⭐）
 
-Conda可以更简单地管理复杂依赖，特别是GPU版本。
+Conda可以更简单地管理复杂依赖，特别是GPU版本的LightGBM。
 
 ```bash
 # 1. 创建conda环境（Python 3.12）
 conda create -n predict-llm python=3.12 -y
 conda activate predict-llm
 
-# 2. 安装主要依赖
-conda install -c conda-forge numpy pandas scikit-learn matplotlib seaborn tqdm joblib -y
+# 2. 安装主要依赖（使用pip，更快更稳定）
+pip install numpy pandas scikit-learn matplotlib seaborn tqdm joblib
 
-# 3. 安装LightGBM（conda自动处理GPU依赖）
+# 3. 安装LightGBM（使用conda，避免GPU版OpenCL问题）
 # CPU版本
 conda install -c conda-forge lightgbm -y
 # GPU版本（需要NVIDIA GPU + CUDA）
@@ -31,8 +31,9 @@ pip install -e .
 ```
 
 **Conda方案优点**：
-- ✅ GPU版LightGBM安装简单，自动处理OpenCL依赖
-- ✅ 依赖隔离更好，减少冲突
+- ✅ 仅用conda安装LightGBM，避免GPU版OpenCL依赖问题
+- ✅ 其他依赖使用pip，安装更快更稳定
+- ✅ 依赖隔离好，减少冲突
 - ✅ 支持多版本Python切换
 - ✅ 跨平台（Windows/macOS/Linux）一致性更好
 
@@ -106,19 +107,19 @@ export USE_GPU=0  # 或在运行脚本时添加 --force-cpu 参数）
 
 ### 环境方案对比
 
-| 特性 | Conda ⭐ | venv |
-|------|----------|------|
-| **GPU支持** | ✅ 简单，自动处理依赖 | ⚠️ 需手动安装OpenCL |
-| **安装速度** | ⚠️ 较慢（打包大） | ✅ 快速 |
-| **依赖管理** | ✅ 更严格，更稳定 | ⚠️ 可能冲突 |
+| 特性 | Conda ⭐ (混合模式) | venv |
+|------|---------------------|------|
+| **GPU支持** | ✅ 简单，仅conda装LightGBM | ⚠️ 需手动安装OpenCL |
+| **安装速度** | ✅ 快（主要依赖用pip） | ✅ 快速 |
+| **依赖管理** | ✅ LightGBM隔离好 | ⚠️ 可能冲突 |
 | **跨平台性** | ✅ 一致性好 | ✅ 好 |
 | **学习成本** | ⚠️ 需了解conda命令 | ✅ 简单 |
-| **推荐场景** | 科研、生产环境 | 开发、测试、轻量级 |
+| **推荐场景** | 需要GPU或科研环境 | 开发、测试、轻量级 |
 
 **选择建议**：
-- 🥇 **新手或服务器用户**：推荐Conda
+- 🥇 **需要GPU加速**：推荐Conda混合模式
 - 🥈 **熟悉Python生态**：可选venv
-- 🥉 **需要GPU加速**：强烈推荐Conda
+- 🥉 **纯CPU使用**：venv更简单快捷
 
 ## 快速运行
 
