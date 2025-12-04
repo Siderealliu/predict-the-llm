@@ -19,6 +19,17 @@ export HF_ENDPOINT=http://hf-mirror.com
 ```
 
 ## 快速运行
+
+```bash
+  source .venv/bin/activate
+  export HF_ENDPOINT=https://hf-mirror.com
+  PYTHONPATH=. python scripts/run_all_experiments.py          # 冒烟版
+  PYTHONPATH=. python scripts/run_all_experiments_full.py     # 全量版
+```
+
+- 快速冒烟版：`python scripts/run_all_experiments.py`
+- 正式全量版：`python scripts/run_all_experiments_full.py`
+- 若需 HF 模型，`先 export HF_ENDPOINT=https://hf-mirror.com`
 - 单个实验示例：
   - 组B Optuna：`python scripts/run_single_experiment.py --group B --method optuna --n_trials 5`
   - 组C Grid：`python scripts/run_single_experiment.py --group C --method grid`
