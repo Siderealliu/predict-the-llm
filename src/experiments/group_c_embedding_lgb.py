@@ -10,7 +10,7 @@ from sklearn.model_selection import GroupKFold, GridSearchCV, RandomizedSearchCV
 from scipy.stats import randint, loguniform, uniform
 
 from src.config.data_config import get_default_data_config
-from src.config.model_config import LGB_BASE_PARAMS
+from src.config.model_config import LGB_BASE_PARAMS, get_lgb_params
 from src.data.data_loader import basic_preprocessing, load_data
 from src.data.splitter import GroupKFoldSplitter
 from src.features.embedding_features import EmbeddingConfig, EmbeddingTransformer
@@ -19,9 +19,16 @@ from src.utils.io_utils import save_json, timestamped_filename
 from src.evaluation.metrics import multiclass_logloss
 
 
+def _use_gpu_flag() -> bool:
+    import os
+
+    return os.environ.get("USE_GPU", "").lower() in ("1", "true", "yes")
+
+
 def build_pipeline(lgb_params: Dict, embed_config: EmbeddingConfig | None = None, force_recompute: bool = False):
     feature = EmbeddingTransformer(embed_config or EmbeddingConfig(), force_recompute=force_recompute)
-    model = LightGBMModel({**LGB_BASE_PARAMS, **lgb_params})
+    base_params = get_lgb_params(use_gpu=_use_gpu_flag())
+    model = LightGBMModel({**base_params, **lgb_params})
     return feature, model
 
 

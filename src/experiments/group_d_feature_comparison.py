@@ -11,7 +11,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 
 from src.config.data_config import get_default_data_config
-from src.config.model_config import LR_BASE_PARAMS, LGB_BASE_PARAMS
+from src.config.model_config import LR_BASE_PARAMS, LGB_BASE_PARAMS, get_lgb_params
 from src.data.data_loader import basic_preprocessing, load_data
 from src.data.splitter import GroupKFoldSplitter
 from src.features.embedding_features import EmbeddingConfig, EmbeddingTransformer
@@ -20,6 +20,12 @@ from src.features.statistical_features import StatisticalFeatures
 from src.models.lightgbm_model import LightGBMModel
 from src.utils.io_utils import save_json, timestamped_filename
 from src.evaluation.metrics import multiclass_logloss
+
+
+def _use_gpu_flag() -> bool:
+    import os
+
+    return os.environ.get("USE_GPU", "").lower() in ("1", "true", "yes")
 
 
 def _get_cv(train_df):
@@ -76,7 +82,7 @@ def _objective_embedding_lgb(train_df, cv, embeddings: np.ndarray):
             "learning_rate": trial.suggest_float("learning_rate", 1e-3, 0.3, log=True),
             "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
         }
-        model = LightGBMModel({**LGB_BASE_PARAMS, **params})
+        model = LightGBMModel({**get_lgb_params(use_gpu=_use_gpu_flag()), **params})
         scores = cross_val_score(model.estimator, embeddings, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1)
         return scores.mean()
 
@@ -137,7 +143,7 @@ def run_experiment(feature_model: str, n_trials: int = 50, output_dir: str = "re
             "learning_rate": best_params.get("learning_rate", 0.1),
             "n_estimators": best_params.get("n_estimators", 500),
         }
-        model = LightGBMModel({**LGB_BASE_PARAMS, **params})
+        model = LightGBMModel({**get_lgb_params(use_gpu=_use_gpu_flag()), **params})
         model.fit(embeddings[~train_df.index.isin(holdout_idx)], train_df.drop(index=holdout_idx)["target"])
         holdout_pred = model.predict_proba(embeddings[train_df.index.isin(holdout_idx)])
 

@@ -18,6 +18,13 @@ pip install -e .
 export HF_ENDPOINT=http://hf-mirror.com
 ```
 
+如有 GPU 并希望提速 embedding/LightGBM，在运行前设置：
+
+```bash
+export USE_GPU=1
+```
+（需要已安装 GPU 版 torch/LightGBM 且有可用 GPU；否则自动回退 CPU）
+
 ## 快速运行
 
 ```bash

@@ -14,11 +14,23 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from src.data.preprocessor import TextPreprocessor
 
 
+def _use_gpu_default() -> Optional[str]:
+    """读取环境变量 USE_GPU=1/true/yes 时默认使用 cuda。"""
+
+    import os
+
+    flag = os.environ.get("USE_GPU", "").lower()
+    if flag in ("1", "true", "yes"):
+        return "cuda"
+    return None
+
+
 @dataclass
 class EmbeddingConfig:
     model_name: str = "all-MiniLM-L6-v2"
     cache_dir: str = "results/cache/embeddings"
     batch_size: int = 64
+    device: Optional[str] = _use_gpu_default()
 
 
 class EmbeddingTransformer(BaseEstimator, TransformerMixin):
@@ -34,7 +46,7 @@ class EmbeddingTransformer(BaseEstimator, TransformerMixin):
 
     def _load_model(self) -> SentenceTransformer:
         if self._model is None:
-            self._model = SentenceTransformer(self.config.model_name)
+            self._model = SentenceTransformer(self.config.model_name, device=self.config.device)
         return self._model
 
     def _compute_embeddings(self, texts: List[str]) -> np.ndarray:

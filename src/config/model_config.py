@@ -45,6 +45,18 @@ LGB_BASE_PARAMS: Dict[str, Any] = {
     "verbose": -1,
 }
 
+# GPU 加速可选参数（启用时在构建模型时合并）
+LGB_GPU_PARAMS: Dict[str, Any] = {
+    "device": "gpu",
+}
+
+
+def get_lgb_params(use_gpu: bool = False) -> Dict[str, Any]:
+    params = {**LGB_BASE_PARAMS}
+    if use_gpu:
+        params.update(LGB_GPU_PARAMS)
+    return params
+
 
 # ---- HPO 搜索空间：组B TF-IDF + LR ----
 GRID_SEARCH_SPACE_B = SearchSpace(
