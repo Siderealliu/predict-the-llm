@@ -4,26 +4,121 @@
 Kaggle竞赛数据下载：<https://www.kaggle.com/competitions/h2oai-predict-the-llm/data?select=sample_submission.csv>
 
 ## 环境安装与启动
-建议使用 Python 3.12，并在项目根目录创建/使用虚拟环境。
+
+### 方案一：Conda 环境（推荐 ⭐）
+
+Conda可以更简单地管理复杂依赖，特别是GPU版本。
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+# 1. 创建conda环境（Python 3.12）
+conda create -n predict-llm python=3.12 -y
+conda activate predict-llm
+
+# 2. 安装主要依赖
+conda install -c conda-forge numpy pandas scikit-learn matplotlib seaborn tqdm joblib -y
+
+# 3. 安装LightGBM（conda自动处理GPU依赖）
+# CPU版本
+conda install -c conda-forge lightgbm -y
+# GPU版本（需要NVIDIA GPU + CUDA）
+conda install -c conda-forge lightgbm-gpu -y
+
+# 4. 安装Optuna和sentence-transformers
+pip install optuna sentence-transformers
+
+# 5. 安装项目（开发模式）
 pip install -e .
 ```
+
+**Conda方案优点**：
+- ✅ GPU版LightGBM安装简单，自动处理OpenCL依赖
+- ✅ 依赖隔离更好，减少冲突
+- ✅ 支持多版本Python切换
+- ✅ 跨平台（Windows/macOS/Linux）一致性更好
+
+### 方案二：Python venv 环境
+
+```bash
+# 1. 创建venv
+python3 -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate    # Windows
+
+# 2. 安装依赖
+pip install -e .
+
+# 3. 如需GPU版LightGBM（更复杂）
+pip uninstall lightgbm -y
+# Ubuntu/Debian需先安装OpenCL：
+# sudo apt install intel-opencl-icd
+# 然后安装GPU版：
+# pip install lightgbm --install-option=--precompile
+```
+
+**Venv方案优点**：
+- ✅ Python原生，无需额外工具
+- ✅ 轻量级，下载快
+- ✅ 适合熟悉pip生态的用户
+
+### HuggingFace 镜像配置
 
 如需使用 HuggingFace 模型（如 sentence-transformers embedding），在网络受限环境下统一设置镜像：
 
 ```bash
-export HF_ENDPOINT=http://hf-mirror.com
+# 方案1：临时设置（推荐）
+export HF_ENDPOINT=https://hf-mirror.com  # Linux/macOS
+# 或
+set HF_ENDPOINT=https://hf-mirror.com      # Windows
+
+# 方案2：永久配置
+echo "https://hf-mirror.com" > ~/.cache/huggingface/transformers/../mirror.txt
 ```
+
+### GPU 加速配置
 
 如有 GPU 并希望提速 embedding/LightGBM，在运行前设置：
 
 ```bash
 export USE_GPU=1
 ```
-（需要已安装 GPU 版 torch/LightGBM 且有可用 GPU；否则自动回退 CPU）
+
+**GPU使用说明**：
+- **CPU模式**：所有实验默认使用CPU，已安装GPU库时自动检测
+- **GPU模式**：设置`USE_GPU=1`环境变量启用
+- **自动回退**：如果GPU不可用或配置错误，自动回退到CPU模式
+- **LightGBM GPU要求**：需要NVIDIA GPU + CUDA，或安装`lightgbm-gpu`（conda）
+
+**常见GPU问题解决**：
+```bash
+# 检查GPU是否可用
+nvidia-smi
+
+# 如果LightGBM报错"没有opencl设备"：
+# 方案A：使用conda安装GPU版（推荐）
+conda install -c conda-forge lightgbm-gpu -y
+
+# 方案B：安装OpenCL运行时（Linux）
+sudo apt install intel-opencl-icd  # Ubuntu/Debian
+
+# 方案C：强制使用CPU（保险）
+export USE_GPU=0  # 或在运行脚本时添加 --force-cpu 参数）
+```
+
+### 环境方案对比
+
+| 特性 | Conda ⭐ | venv |
+|------|----------|------|
+| **GPU支持** | ✅ 简单，自动处理依赖 | ⚠️ 需手动安装OpenCL |
+| **安装速度** | ⚠️ 较慢（打包大） | ✅ 快速 |
+| **依赖管理** | ✅ 更严格，更稳定 | ⚠️ 可能冲突 |
+| **跨平台性** | ✅ 一致性好 | ✅ 好 |
+| **学习成本** | ⚠️ 需了解conda命令 | ✅ 简单 |
+| **推荐场景** | 科研、生产环境 | 开发、测试、轻量级 |
+
+**选择建议**：
+- 🥇 **新手或服务器用户**：推荐Conda
+- 🥈 **熟悉Python生态**：可选venv
+- 🥉 **需要GPU加速**：强烈推荐Conda
 
 ## 快速运行
 
