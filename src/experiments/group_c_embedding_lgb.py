@@ -54,12 +54,17 @@ def run_grid(train_df, cv):
     feature, model = build_pipeline({}, force_recompute=False)
     # 预计算embedding
     X_emb = feature.transform(train_df)
+
+    use_gpu = _use_gpu_flag()
+    n_jobs = 1 if use_gpu else -1
+
     search = GridSearchCV(
         estimator=model.estimator,
         param_grid=param_grid,
         cv=cv,
         scoring="neg_log_loss",
-        n_jobs=-1,
+        n_jobs=n_jobs,
+        verbose=2,
     )
     search.fit(X_emb, train_df["target"])
     return search.best_params_, search.best_score_
@@ -78,14 +83,19 @@ def run_random(train_df, cv, n_iter: int):
     }
     feature, model = build_pipeline({}, force_recompute=False)
     X_emb = feature.transform(train_df)
+
+    use_gpu = _use_gpu_flag()
+    n_jobs = 1 if use_gpu else -1
+
     search = RandomizedSearchCV(
         estimator=model.estimator,
         param_distributions=param_dist,
         n_iter=n_iter,
         cv=cv,
         scoring="neg_log_loss",
-        n_jobs=-1,
+        n_jobs=n_jobs,
         random_state=42,
+        verbose=2,
     )
     search.fit(X_emb, train_df["target"])
     return search.best_params_, search.best_score_
@@ -105,7 +115,11 @@ def run_optuna(train_df, cv, n_trials: int):
         }
         feature, model = build_pipeline(params, force_recompute=False)
         X_emb = feature.transform(train_df)
-        scores = cross_val_score(model.estimator, X_emb, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1)
+
+        use_gpu = _use_gpu_flag()
+        n_jobs = 1 if use_gpu else -1
+
+        scores = cross_val_score(model.estimator, X_emb, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=n_jobs, verbose=1)
         return scores.mean()
 
     study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=42), pruner=optuna.pruners.MedianPruner(n_warmup_steps=5))

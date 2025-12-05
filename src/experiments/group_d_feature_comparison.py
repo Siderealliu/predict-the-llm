@@ -58,7 +58,7 @@ def _objective_tfidf_lr(train_df, cv, use_char: bool):
         class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
         estimator = tfidf_pipe
         estimator.steps.append(("classifier", LogisticRegression(**{**LR_BASE_PARAMS, "C": C, "class_weight": class_weight})))
-        scores = cross_val_score(estimator, train_df, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1)
+        scores = cross_val_score(estimator, train_df, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1, verbose=1)
         return scores.mean()
 
     return objective
@@ -69,7 +69,7 @@ def _objective_embedding_lr(train_df, cv, embeddings: np.ndarray):
         C = trial.suggest_float("C", 1e-3, 1e2, log=True)
         class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
         model = LogisticRegression(**{**LR_BASE_PARAMS, "C": C, "class_weight": class_weight})
-        scores = cross_val_score(model, embeddings, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1)
+        scores = cross_val_score(model, embeddings, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1, verbose=1)
         return scores.mean()
 
     return objective
@@ -82,8 +82,10 @@ def _objective_embedding_lgb(train_df, cv, embeddings: np.ndarray):
             "learning_rate": trial.suggest_float("learning_rate", 1e-3, 0.3, log=True),
             "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
         }
-        model = LightGBMModel({**get_lgb_params(use_gpu=_use_gpu_flag()), **params})
-        scores = cross_val_score(model.estimator, embeddings, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1)
+        use_gpu = _use_gpu_flag()
+        n_jobs = 1 if use_gpu else -1
+        model = LightGBMModel({**get_lgb_params(use_gpu=use_gpu), **params})
+        scores = cross_val_score(model.estimator, embeddings, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=n_jobs, verbose=1)
         return scores.mean()
 
     return objective

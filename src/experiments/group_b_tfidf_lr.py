@@ -73,6 +73,7 @@ def run_grid(train_df, cv):
         cv=cv,
         scoring="neg_log_loss",
         n_jobs=-1,
+        verbose=2,
     )
     search.fit(train_df, train_df["target"])
     return search.best_params_, search.best_score_
@@ -98,6 +99,7 @@ def run_random(train_df, cv, n_iter: int):
         scoring="neg_log_loss",
         n_jobs=-1,
         random_state=42,
+        verbose=2,
     )
     search.fit(train_df, train_df["target"])
     return search.best_params_, search.best_score_

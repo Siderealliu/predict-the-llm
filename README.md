@@ -21,7 +21,7 @@ pip install numpy pandas scikit-learn matplotlib seaborn tqdm joblib
 # CPU版本
 conda install -c conda-forge lightgbm -y
 # GPU版本（需要NVIDIA GPU + CUDA）
-conda install -c conda-forge lightgbm-gpu -y
+pip install lightgbm --no-binary lightgbm --config-settings=cmake.define.USE_GPU=ON
 
 # 4. 安装Optuna和sentence-transformers
 pip install optuna sentence-transformers
@@ -29,13 +29,6 @@ pip install optuna sentence-transformers
 # 5. 安装项目（开发模式）
 pip install -e .
 ```
-
-**Conda方案优点**：
-- ✅ 仅用conda安装LightGBM，避免GPU版OpenCL依赖问题
-- ✅ 其他依赖使用pip，安装更快更稳定
-- ✅ 依赖隔离好，减少冲突
-- ✅ 支持多版本Python切换
-- ✅ 跨平台（Windows/macOS/Linux）一致性更好
 
 ### 方案二：Python venv 环境
 

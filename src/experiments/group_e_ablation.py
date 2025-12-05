@@ -12,7 +12,7 @@ from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from src.config.data_config import get_default_data_config
-from src.config.model_config import LR_BASE_PARAMS, LGB_BASE_PARAMS
+from src.config.model_config import LR_BASE_PARAMS, LGB_BASE_PARAMS, get_lgb_params
 from src.data.data_loader import basic_preprocessing, load_data
 from src.data.splitter import GroupKFoldSplitter
 from src.data.preprocessor import TextPreprocessor
@@ -47,7 +47,7 @@ def _optuna_tfidf(train_df, cv, mode: str, n_trials: int):
                 ("classifier", LogisticRegression(**{**LR_BASE_PARAMS, "C": C, "class_weight": class_weight})),
             ]
         )
-        scores = cross_val_score(pipeline, train_df, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1)
+        scores = cross_val_score(pipeline, train_df, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1, verbose=1)
         return scores.mean()
 
     study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=42))
@@ -56,9 +56,13 @@ def _optuna_tfidf(train_df, cv, mode: str, n_trials: int):
 
 
 def _stat_only(train_df, cv):
-    model = LightGBMModel(LGB_BASE_PARAMS)
+    import os
+    use_gpu = os.environ.get("USE_GPU", "").lower() in ("1", "true", "yes")
+    n_jobs = 1 if use_gpu else -1
+    
+    model = LightGBMModel(get_lgb_params(use_gpu=use_gpu))
     feats = StatisticalFeatures().transform(train_df)
-    scores = cross_val_score(model.estimator, feats, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1)
+    scores = cross_val_score(model.estimator, feats, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=n_jobs, verbose=1)
     return scores.mean()
 
 
@@ -82,7 +86,7 @@ def _tfidf_plus_stat(train_df, cv, n_trials: int):
                 ("classifier", LogisticRegression(**{**LR_BASE_PARAMS, "C": C, "class_weight": class_weight})),
             ]
         )
-        scores = cross_val_score(pipeline, train_df, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1)
+        scores = cross_val_score(pipeline, train_df, train_df["target"], cv=cv, scoring="neg_log_loss", n_jobs=-1, verbose=1)
         return scores.mean()
 
     study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=42))
